@@ -279,10 +279,10 @@ router.post('/login', async (req, res) => {
         const user = userRes.rows[0];
 
         // Check if user registered via Google / OAuth
-        if (!user.password_hash || user.password_hash.startsWith('oauth:')) {
+        if (!user.password_hash || user.password_hash.startsWith('oauth:') || user.password_hash === 'google_oauth_verified') {
             return res.status(401).json({
                 error: 'OAUTH_ACCOUNT',
-                message: 'This account was signed up with Google. Please click "Log in with Google" below.'
+                message: 'This account was signed up with Google. Please click "Continue with Google" above to sign in instantly, or use "Reset Password" if you wish to create a password.'
             });
         }
 

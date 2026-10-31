@@ -525,6 +525,15 @@ async function calculateQuickSplit({ textPrompt, manualData }) {
 
         const systemPrompt = `You are an expert bill-splitting financial calculator for SplitSmart.
 Given the user's bill description, calculate exact per-person shares, total, tax, tip, and who owes whom.
+
+CRITICAL MATHEMATICAL LAWS:
+1. CONSERVATION OF TOTAL: The sum of all 'share' amounts in the people array MUST EXACTLY equal 'total': sum(people.share) === total.
+2. CONSUMPTION SHARE VS PAID: 
+   - 'share' is what this person personally consumed and owes for their own portion.
+   - 'paid' is what this person paid at the cash register to the venue (e.g. if Sarah paid the full bill of 205 for 3 people, Sarah's paid = 205, but Sarah's personal share is only her 1/3 portion of 68.33).
+3. NO OVER-SHARE: No person's share can ever exceed 'total'.
+4. WHO OWES WHOM: Settlements list each non-payer paying their share to the person who paid full.
+
 Output MUST be strict raw JSON without backticks, adhering to this structure:
 {
   "title": string (e.g. "Dinner & Drinks at Olive Garden"),
@@ -537,9 +546,9 @@ Output MUST be strict raw JSON without backticks, adhering to this structure:
   "people": [
     {
       "name": string,
-      "share": number (exact amount this person owes),
-      "paid": number (how much this person already paid towards the bill),
-      "note": string (e.g. "Shared 1/3 + $10 cocktail")
+      "share": number (exact amount this person personally consumed/owes),
+      "paid": number (how much this person paid to the merchant),
+      "note": string (e.g. "Shared 1/3" or "Individual item + tax/tip")
     }
   ],
   "settlements": [
@@ -813,23 +822,75 @@ function computeManualQuickSplit(data) {
  */
 function finalizeQuickSplitResult(result) {
     const cur = result.currency || '$';
-    const expectedTotal = Number(result.total || 0);
+    let expectedTotal = Number(result.total || 0);
+    const payer = (result.payerName || 'Payer').trim();
 
-    // Invariant Guarantee: Sum of all people's shares MUST equal result.total
+    // Mathematical Guarantee: Exact zero-drift consistency
     if (result.people && result.people.length > 0) {
-        const totalShares = Number(result.people.reduce((sum, p) => sum + (Number(p.share) || 0), 0).toFixed(2));
-        const diff = Number((expectedTotal - totalShares).toFixed(2));
+        const count = result.people.length;
 
-        if (Math.abs(diff) >= 0.01) {
-            // Find payer or first person and adjust by diff
-            const target = result.people.find(p => p.name.toLowerCase() === (result.payerName || '').toLowerCase()) || result.people[0];
-            target.share = Number(Math.max(0, target.share + diff).toFixed(2));
+        // If total was 0 but individual shares were specified, derive total from shares
+        if (expectedTotal <= 0) {
+            const sumShares = result.people.reduce((sum, p) => sum + (Number(p.share) || 0), 0);
+            if (sumShares > 0) expectedTotal = Number(sumShares.toFixed(2));
         }
+
+        if (expectedTotal > 0) {
+            // Check for hallucinated individual shares that exceed the entire bill
+            let totalShares = Number(result.people.reduce((sum, p) => sum + (Number(p.share) || 0), 0).toFixed(2));
+            const hasOverShare = result.people.some(p => Number(p.share) > expectedTotal);
+
+            if (hasOverShare || Math.abs(expectedTotal - totalShares) > 0.05) {
+                // Rescale shares proportionally to match expectedTotal exactly
+                const baseSum = totalShares > 0 && !hasOverShare ? totalShares : count;
+                const totalCents = Math.round(expectedTotal * 100);
+                let allocatedCents = 0;
+
+                result.people.forEach((p, idx) => {
+                    const weight = (totalShares > 0 && !hasOverShare) ? (Number(p.share) || 0) : 1;
+                    if (idx === count - 1) {
+                        p.share = Math.max(0, totalCents - allocatedCents) / 100;
+                    } else {
+                        const c = Math.round((weight / baseSum) * totalCents);
+                        p.share = c / 100;
+                        allocatedCents += c;
+                    }
+                });
+            } else if (Math.abs(expectedTotal - totalShares) >= 0.01) {
+                // Minor 1-2 cent roundoff drift - adjust payer or first member
+                const diff = Number((expectedTotal - totalShares).toFixed(2));
+                const target = result.people.find(p => p.name.toLowerCase() === payer.toLowerCase()) || result.people[0];
+                target.share = Number(Math.max(0, (Number(target.share) || 0) + diff).toFixed(2));
+            }
+        }
+
+        // Set paid field: payer paid full bill, others paid 0 towards the bill
+        result.people.forEach(p => {
+            const isPayer = p.name.toLowerCase() === payer.toLowerCase();
+            p.paid = isPayer ? expectedTotal : 0;
+            p.share = Number(Number(p.share || 0).toFixed(2));
+        });
     }
 
-    const totalStr = `${cur}${expectedTotal.toFixed(2)}`;
+    result.total = Number(expectedTotal.toFixed(2));
+
+    // Reconstruct direct settlements accurately: non-payers pay their share to payer
+    const newSettlements = [];
+    if (result.people && result.people.length > 0) {
+        result.people.forEach(p => {
+            if (p.name.toLowerCase() !== payer.toLowerCase() && p.share > 0) {
+                newSettlements.push({
+                    from: p.name,
+                    to: payer,
+                    amount: p.share
+                });
+            }
+        });
+    }
+    result.settlements = newSettlements;
+
+    const totalStr = `${cur}${result.total.toFixed(2)}`;
     const title = result.title || 'Shared Bill';
-    const payer = result.payerName || 'Payer';
 
     // Build attractive WhatsApp message
     let waLines = [];

@@ -10,8 +10,29 @@ let addExpenseState = {
     splitMethod: 'EQUAL', // 'EQUAL' | 'CUSTOM' | 'PERCENTAGE' | 'SHARES' | 'ADJUSTMENT'
     isMultiPayer: false,
     coPayers: {}, // { [userId]: number }
-    participants: {} // { [userId]: { selected: boolean, customAmount: number, percentage: number, shares: number, adjustment: number } }
+    participants: {}, // { [userId]: { selected: boolean, customAmount: number, percentage: number, shares: number, adjustment: number } }
+    savedDescription: '',
+    savedAmount: '',
+    savedCategory: 'General',
+    savedDate: '',
+    savedPayerId: null,
+    savedNotes: ''
 };
+
+function captureExpenseInputs() {
+    const desc = document.getElementById('exp-description');
+    if (desc) addExpenseState.savedDescription = desc.value;
+    const amt = document.getElementById('exp-amount');
+    if (amt) addExpenseState.savedAmount = amt.value;
+    const cat = document.getElementById('exp-category');
+    if (cat) addExpenseState.savedCategory = cat.value;
+    const payer = document.getElementById('exp-payer');
+    if (payer) addExpenseState.savedPayerId = payer.value;
+    const dt = document.getElementById('exp-date');
+    if (dt) addExpenseState.savedDate = dt.value;
+    const notes = document.getElementById('exp-notes');
+    if (notes) addExpenseState.savedNotes = notes.value;
+}
 
 async function renderAddExpenseView(prefillData = null) {
     const content = document.getElementById('app-content');
@@ -146,12 +167,12 @@ function renderExpenseForm() {
               <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
                 <div class="form-group">
                   <label class="form-label">Description *</label>
-                  <input type="text" id="exp-description" class="form-input" placeholder="e.g. Dinner, Groceries, Hotel rental" required autofocus>
+                  <input type="text" id="exp-description" class="form-input" value="${escapeHtml(addExpenseState.savedDescription || '')}" placeholder="Expense description" required autofocus>
                 </div>
 
                 <div class="form-group">
                   <label class="form-label">Total Amount (${cur}) *</label>
-                  <input type="number" id="exp-amount" class="form-input num" step="0.01" min="0.01" placeholder="0.00" oninput="updateSplitPreview()" required>
+                  <input type="number" id="exp-amount" class="form-input num" value="${addExpenseState.savedAmount || ''}" step="0.01" min="0.01" placeholder="0.00" oninput="updateSplitPreview()" required>
                 </div>
               </div>
 
@@ -303,6 +324,7 @@ function renderExpenseForm() {
 }
 
 async function handleGroupChange(groupId) {
+    captureExpenseInputs();
     addExpenseState.selectedGroupId = parseInt(groupId, 10);
     await loadGroupMembers(addExpenseState.selectedGroupId);
     renderExpenseForm();
@@ -341,7 +363,14 @@ function updatePayerBalanceIndicator() {
 }
 
 function setSplitMethod(method) {
+    captureExpenseInputs();
     addExpenseState.splitMethod = method;
+    renderExpenseForm();
+}
+
+function toggleMultiPayerMode() {
+    captureExpenseInputs();
+    addExpenseState.isMultiPayer = !addExpenseState.isMultiPayer;
     renderExpenseForm();
 }
 

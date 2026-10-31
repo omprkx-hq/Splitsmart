@@ -37,6 +37,14 @@ app.use(express.static(publicDir));
 // Mount API Router on both /api and Netlify Functions prefixes
 const apiRouter = express.Router();
 
+// Ensure all API endpoints deliver real-time live data without stale browser caching
+apiRouter.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    next();
+});
+
 apiRouter.get('/health', (req, res) => {
     res.json({
         status: 'UP',

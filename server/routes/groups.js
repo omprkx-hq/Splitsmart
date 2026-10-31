@@ -13,9 +13,6 @@ const { getGroupInviteTemplate } = require('../services/emailTemplates');
  * Always prefers the active Cloudflare Tunnel, public custom domain, or request host over localhost.
  */
 function resolveAppUrl(req) {
-    if (process.env.PUBLIC_APP_URL && !process.env.PUBLIC_APP_URL.includes('localhost')) {
-        return process.env.PUBLIC_APP_URL.trim().replace(/\/+$/, '');
-    }
     if (req) {
         const forwardedHost = req.get('x-forwarded-host');
         const host = forwardedHost || req.get('host');
@@ -33,10 +30,13 @@ function resolveAppUrl(req) {
             } catch (_) {}
         }
     }
+    if (process.env.PUBLIC_APP_URL && !process.env.PUBLIC_APP_URL.includes('localhost')) {
+        return process.env.PUBLIC_APP_URL.trim().replace(/\/+$/, '');
+    }
     if (process.env.APP_URL && !process.env.APP_URL.includes('localhost')) {
         return process.env.APP_URL.trim().replace(/\/+$/, '');
     }
-    return 'https://cooler-processors-exhibition-heard.trycloudflare.com';
+    return 'https://hiking-steam-modifications-curriculum.trycloudflare.com';
 }
 
 /**
