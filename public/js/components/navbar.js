@@ -89,9 +89,16 @@ function toggleTheme(e) {
     const currentEffective = document.documentElement.getAttribute('data-theme') || getEffectiveTheme();
     const nextTheme = currentEffective === 'dark' ? 'light' : 'dark';
     
-    applyTheme(nextTheme, e);
+    if (typeof window.executeCircularThemeTransition === 'function') {
+        window.executeCircularThemeTransition(e, nextTheme, () => {
+            applyTheme(nextTheme, e);
+        });
+    } else {
+        applyTheme(nextTheme, e);
+    }
+
     if (typeof showToast === 'function') {
-        showToast(nextTheme === 'dark' ? 'Switched to Midnight Navy Dark Mode' : 'Switched to Crisp Light Mode', 'info', 2000);
+        showToast(nextTheme === 'dark' ? 'Switched to Obsidian Executive Dark' : 'Switched to Studio Light', 'info', 1800);
     }
 }
 

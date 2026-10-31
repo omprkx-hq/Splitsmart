@@ -174,18 +174,25 @@
 
     // -------------------------------------------------------------------------
     // 6. Subtle Card Spotlight Illumination (Linear physical light feel)
+    // High-performance requestAnimationFrame throttled (0ms latency, zero reflow lag)
     // -------------------------------------------------------------------------
     function initCardSpotlight() {
+        let spotlightTicking = false;
         document.addEventListener('mousemove', (e) => {
-            const card = e.target.closest('.card, .stat-card, .feature-box, .group-card-modern, .action-tile');
-            if (!card) return;
-
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            card.style.setProperty('--mouse-x', `${x}px`);
-            card.style.setProperty('--mouse-y', `${y}px`);
+            if (!spotlightTicking) {
+                requestAnimationFrame(() => {
+                    const card = e.target.closest('.card, .stat-card, .feature-box, .group-card-modern, .action-tile');
+                    if (card) {
+                        const rect = card.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        card.style.setProperty('--mouse-x', `${x}px`);
+                        card.style.setProperty('--mouse-y', `${y}px`);
+                    }
+                    spotlightTicking = false;
+                });
+                spotlightTicking = true;
+            }
         }, { passive: true });
     }
 
@@ -201,19 +208,27 @@
     let mouseTiltY = 0;
     let targetTiltX = 0;
     let targetTiltY = 0;
+    let vaultTiltTicking = false;
 
     window.addEventListener('mousemove', (e) => {
-        const stage = document.getElementById('vault-stage-container');
-        if (!stage) return;
-        const rect = stage.getBoundingClientRect();
-        if (e.clientY >= rect.top - 120 && e.clientY <= rect.bottom + 120) {
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            targetTiltX = ((e.clientX - centerX) / (rect.width / 2)) * 8; // max 8 deg Y-axis
-            targetTiltY = -((e.clientY - centerY) / (rect.height / 2)) * 6; // max 6 deg X-axis
-        } else {
-            targetTiltX = 0;
-            targetTiltY = 0;
+        if (!vaultTiltTicking) {
+            requestAnimationFrame(() => {
+                const stage = document.getElementById('vault-stage-container');
+                if (stage) {
+                    const rect = stage.getBoundingClientRect();
+                    if (e.clientY >= rect.top - 120 && e.clientY <= rect.bottom + 120) {
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
+                        targetTiltX = ((e.clientX - centerX) / (rect.width / 2)) * 8; // max 8 deg Y-axis
+                        targetTiltY = -((e.clientY - centerY) / (rect.height / 2)) * 6; // max 6 deg X-axis
+                    } else {
+                        targetTiltX = 0;
+                        targetTiltY = 0;
+                    }
+                }
+                vaultTiltTicking = false;
+            });
+            vaultTiltTicking = true;
         }
     }, { passive: true });
 
@@ -482,10 +497,14 @@
 
         const content = document.getElementById('app-content');
         if (content && typeof MutationObserver !== 'undefined') {
+            let debounceTimer = null;
             const domObserver = new MutationObserver(() => {
-                scanAndObserve();
-                triggerKineticText();
-                initScrollVaultEngine();
+                if (debounceTimer) clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    scanAndObserve();
+                    triggerKineticText();
+                    initScrollVaultEngine();
+                }, 150);
             });
             domObserver.observe(content, { childList: true, subtree: true });
         }

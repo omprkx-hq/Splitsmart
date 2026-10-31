@@ -149,60 +149,70 @@
 }
 
 /* Explicit User Override: Obsidian Charcoal Dark Theme (Linear / Raycast Standard) */
-[data-theme="dark"], [data-theme="amoled"] {
+[data-theme="dark"], [data-theme="amoled"], :root:not([data-theme="light"]) {
   --color-scheme: dark;
   
-  --bg-body: #08090C;
-  --bg-surface: #0F1117;
-  --bg-surface-elevated: #161822;
-  --bg-muted: #1A1D28;
-  --bg-subtle: #0B0D12;
-  --bg-nav: rgba(8, 9, 12, 0.82);
+  --bg-body: #07090E;
+  --bg-surface: #0E131F;
+  --bg-surface-elevated: #141B2D;
+  --bg-muted: #1A2238;
+  --bg-subtle: #090C14;
+  --bg-nav: rgba(7, 9, 14, 0.88);
 
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.16);
   --border-focus: #3B82F6;
 
-  --text-primary: #F3F4F6;
-  --text-secondary: #A1A1AA;
-  --text-muted: #71717A;
-  --text-inverse: #08090C;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --text-inverse: #07090E;
 
   --accent-primary: #3B82F6;
   --accent-primary-hover: #2563EB;
-  --accent-primary-subtle: rgba(59, 130, 246, 0.12);
-  --accent-primary-border: rgba(59, 130, 246, 0.35);
+  --accent-primary-subtle: rgba(59, 130, 246, 0.14);
+  --accent-primary-border: rgba(59, 130, 246, 0.38);
   --accent-primary-text: #60A5FA;
   --accent-primary-contrast: #FFFFFF;
-  --accent-glow: rgba(59, 130, 246, 0.22);
-  --accent-border-hover: rgba(59, 130, 246, 0.55);
+  --accent-glow: rgba(59, 130, 246, 0.28);
+  --accent-border-hover: rgba(59, 130, 246, 0.65);
 
   --accent-emerald: #10B981;
   --accent-emerald-hover: #059669;
-  --accent-emerald-subtle: rgba(16, 185, 129, 0.12);
-  --accent-emerald-border: rgba(16, 185, 129, 0.3);
+  --accent-emerald-subtle: rgba(16, 185, 129, 0.14);
+  --accent-emerald-border: rgba(16, 185, 129, 0.35);
   --accent-emerald-text: #34D399;
 
   --danger-primary: #F43F5E;
-  --danger-subtle: rgba(244, 63, 94, 0.12);
-  --danger-border: rgba(244, 63, 94, 0.3);
+  --danger-subtle: rgba(244, 63, 94, 0.14);
+  --danger-border: rgba(244, 63, 94, 0.35);
   --danger-text: #FB7185;
-  --danger-glow: rgba(244, 63, 94, 0.2);
+  --danger-glow: rgba(244, 63, 94, 0.25);
 
   --warning-primary: #F59E0B;
-  --warning-subtle: rgba(245, 158, 11, 0.12);
-  --warning-border: rgba(245, 158, 11, 0.3);
+  --warning-subtle: rgba(245, 158, 11, 0.14);
+  --warning-border: rgba(245, 158, 11, 0.35);
   --warning-text: #FBBF24;
-  --warning-glow: rgba(245, 158, 11, 0.2);
+  --warning-glow: rgba(245, 158, 11, 0.25);
 
   --info-primary: #38BDF8;
-  --info-subtle: rgba(56, 189, 248, 0.12);
-  --info-border: rgba(56, 189, 248, 0.3);
+  --info-subtle: rgba(56, 189, 248, 0.14);
+  --info-border: rgba(56, 189, 248, 0.35);
   --info-text: #38BDF8;
 
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.6);
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.7);
-  --shadow-md: 0 8px 18px -4px rgba(0, 0, 0, 0.75);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.7);
+  --shadow-md: 0 10px 24px -4px rgba(0, 0, 0, 0.8);
+  --shadow-lg: 0 20px 40px -8px rgba(0, 0, 0, 0.9);
+}
+
+[data-theme="dark"] body, :root:not([data-theme="light"]) body {
+  background-color: var(--bg-body);
+  background-image: 
+    radial-gradient(circle at 50% -20%, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+  background-attachment: fixed;
+}
   --shadow-lg: 0 16px 36px -8px rgba(0, 0, 0, 0.85);
 }
 
@@ -363,7 +373,6 @@ body {
   padding: 0;
   font-family: var(--font-main);
   background-color: var(--bg-body);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -866,13 +875,11 @@ a {
 @keyframes pageFadeSlideUp {
   0% {
     opacity: 0;
-    transform: translateY(14px);
-    filter: blur(4px);
+    transform: translateY(12px);
   }
   100% {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0);
   }
 }
 
