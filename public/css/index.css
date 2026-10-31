@@ -69,7 +69,8 @@
   --info-border: rgba(0, 112, 186, 0.25);
   --info-text: #0070BA;
 
-  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.01em;
   --font-code: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Executive Micro-Elevations */
@@ -362,6 +363,7 @@ body {
   padding: 0;
   font-family: var(--font-main);
   background-color: var(--bg-body);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -411,8 +413,8 @@ a {
   top: 0;
   z-index: 100;
   background-color: var(--bg-nav);
-  backdrop-filter: saturate(180%) blur(16px);
-  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
   transition: background-color var(--transition-normal), border-color var(--transition-normal);
@@ -655,6 +657,12 @@ a {
   display: none;
 }
 
+/* Auth Container & Card */
+.auth-card {
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), var(--shadow-lg);
+}
+
 /* Segmented Auth Navigation Tabs */
 .auth-tabs-nav {
   display: flex;
@@ -719,20 +727,23 @@ a {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-primary-hover) 100%);
-  color: var(--accent-primary-contrast, #000000);
-  font-weight: 750;
-  letter-spacing: -0.01em;
-  box-shadow: 0 4px 14px var(--accent-glow);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-hover));
+  color: var(--accent-primary-contrast, #FFFFFF);
+  font-weight: 700;
+  letter-spacing: 0.01em;
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.15);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-primary:hover {
-  filter: brightness(1.06);
-  box-shadow: 0 6px 20px var(--accent-glow);
   transform: translateY(-1px);
+  box-shadow: 0 8px 20px -4px var(--accent-glow);
+}
+
+.btn-primary:active {
+  transform: translateY(0px);
 }
 
 .btn-orange, .btn-fiery {
@@ -901,7 +912,12 @@ a {
 .dashboard-bottom-grid > *:nth-child(2) { animation-delay: 0.20s; }
 
 :root:not([data-theme="light"]) .card,
-[data-theme="dark"] .card,
+[data-theme="dark"] .card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, transparent 100%), var(--bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), var(--shadow-md);
+}
+
 :root:not([data-theme="light"]) .group-card-modern,
 [data-theme="dark"] .group-card-modern,
 :root:not([data-theme="light"]) .action-tile,
@@ -1170,8 +1186,9 @@ a {
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
   outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-primary-subtle);
+  background: var(--bg-surface);
 }
 
 /* Eliminate browser autofill ugly yellow/blue wash */
@@ -3749,4 +3766,22 @@ input:-webkit-autofill:active {
 
 .bill-btn-keep:hover {
   background: #E2E8F0;
+}
+
+@media (max-width: 768px) {
+    .main-wrapper {
+        padding: 0 12px;
+        margin-top: 60px;
+    }
+    .dashboard-grid, .actions-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .top-navbar .nav-links {
+        display: none;
+    }
+    .card {
+        border-radius: 12px;
+        padding: 16px;
+    }
 }

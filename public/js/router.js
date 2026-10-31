@@ -81,7 +81,7 @@ const Router = {
                 window.location.hash = '#/dashboard';
                 return;
             }
-            renderAuthView('google');
+            window.location.hash = '#/login';
             return;
         }
 

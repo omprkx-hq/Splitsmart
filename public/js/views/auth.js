@@ -2,19 +2,21 @@
  * SplitSmart AI - Enterprise Authentication Engine
  * Supports:
  * - Segmented Navigation Tabs: Sign In, Create Account, Reset Password
- * - Official Google Identity Sign-In (Direct / Modal / Dedicated Tab)
- * - Zero developer or backend provider branding (Pristine Consumer White-Label)
  * - 6-Digit Email OTP Security Verification & Password Recovery
+ * - Rate-limited secure password authentication
  */
 
 let authState = {
-    mode: 'login', // 'login' | 'signup' | 'forgot' | 'otp' | 'google'
+    mode: 'login', // 'login' | 'signup' | 'forgot' | 'otp'
     pendingEmail: '',
     pendingUserId: null,
     resetStep: 1 // 1: request code, 2: enter code & new password
 };
 
 function switchAuthTab(mode) {
+    if (!['login', 'signup', 'forgot', 'otp'].includes(mode)) {
+        mode = 'login';
+    }
     authState.mode = mode;
     if (mode === 'login') {
         window.location.hash = '#/login';
@@ -22,8 +24,6 @@ function switchAuthTab(mode) {
         window.location.hash = '#/signup';
     } else if (mode === 'forgot') {
         window.location.hash = '#/forgot-password';
-    } else if (mode === 'google') {
-        window.location.hash = '#/auth/google';
     }
     renderAuthView(mode);
 }
@@ -32,7 +32,7 @@ function renderAuthView(initialMode) {
     const content = document.getElementById('app-content');
     if (!content) return;
 
-    if (initialMode) {
+    if (initialMode && ['login', 'signup', 'forgot', 'otp'].includes(initialMode)) {
         authState.mode = initialMode;
     }
 
@@ -40,20 +40,8 @@ function renderAuthView(initialMode) {
     const isSignup = authState.mode === 'signup';
     const isForgot = authState.mode === 'forgot';
     const isOtp = authState.mode === 'otp';
-    const isGoogle = authState.mode === 'google';
 
-    const googleSvg = `
-      <svg width="20" height="20" viewBox="0 0 24 24">
-        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-      </svg>
-    `;
-
-    // Last remembered Google email for instant 1-click login
     const rememberedEmail = localStorage.getItem('splitsmart_last_email') || '';
-    const rememberedName = localStorage.getItem('splitsmart_last_name') || '';
 
     content.innerHTML = `
       <div style="max-width: 460px; margin: 30px auto; width: 100%; box-sizing: border-box;">
@@ -64,19 +52,19 @@ function renderAuthView(initialMode) {
             <span>Split<span class="brand-highlight">Smart</span></span>
           </a>
           <h2 style="font-size: 22px; font-weight: 800; color: var(--text-primary); margin-top: 10px; letter-spacing: -0.4px;">
-            ${isLogin ? 'Welcome back' : isSignup ? 'Create an account' : isForgot ? 'Reset your password' : isGoogle ? 'Sign in with Google' : 'Verify your email'}
+            ${isLogin ? 'Welcome back' : isSignup ? 'Create an account' : isForgot ? 'Reset your password' : 'Verify your email'}
           </h2>
           <p style="font-size: 13.5px; color: var(--text-muted); margin-top: 4px;">
-            ${isLogin ? 'Sign in to split bills with friends, family, and roommates.' : isSignup ? 'Fair, transparent expense tracking with zero hidden fees.' : isForgot ? 'Enter your registered email to receive a 6-digit reset code.' : isGoogle ? 'Choose a Google account to connect to SplitSmart.' : `Enter the 6-digit verification code sent to <strong>${escapeHtml(authState.pendingEmail)}</strong>.`}
+            ${isLogin ? 'Sign in to split bills with friends, family, and roommates.' : isSignup ? 'Fair, transparent expense tracking with zero hidden fees.' : isForgot ? 'Enter your registered email to receive a 6-digit reset code.' : `Enter the 6-digit verification code sent to <strong>${escapeHtml(authState.pendingEmail)}</strong>.`}
           </p>
         </div>
 
         <!-- Auth Card -->
-        <div class="card" style="box-shadow: var(--shadow-lg); border-radius: 16px;">
+        <div class="card auth-card" style="box-shadow: var(--shadow-lg); border-radius: 16px;">
           <div class="card-body" style="padding: 24px;">
 
             <!-- Segmented Auth Navigation Tabs -->
-            ${!isOtp && !isGoogle ? `
+            ${!isOtp ? `
               <div class="auth-tabs-nav">
                 <button type="button" class="auth-tab-btn ${isLogin ? 'active' : ''}" onclick="switchAuthTab('login')">
                   Sign In
@@ -96,65 +84,6 @@ function renderAuthView(initialMode) {
               </div>
             ` : ''}
 
-            <!-- MODE: Dedicated Google Sign-In Tab / View -->
-            ${isGoogle ? `
-              <div style="text-align: center; padding: 8px 0;">
-                <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--bg-muted); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
-                  ${googleSvg}
-                </div>
-                <h3 style="font-size: 19px; font-weight: 800; color: var(--text-primary); margin-bottom: 6px;">Official Google Identity</h3>
-                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
-                  Connect your Google account to SplitSmart securely.
-                </p>
-
-                ${rememberedEmail ? `
-                  <!-- 1-Click Fast Account Card -->
-                  <div onclick="handleOneClickGoogleLogin('${escapeHtml(rememberedEmail)}', '${escapeHtml(rememberedName || 'User')}')" 
-                       style="background: var(--bg-muted); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;"
-                       onmouseover="this.style.borderColor='var(--accent-primary)'" 
-                       onmouseout="this.style.borderColor='var(--border-subtle)'">
-                    <div style="display: flex; align-items: center; gap: 12px; text-align: left;">
-                      <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-primary); color: #FFF; display: flex; align-items: center; justify-content: center; font-weight: 700;">
-                        ${rememberedName ? rememberedName.charAt(0).toUpperCase() : 'G'}
-                      </div>
-                      <div>
-                        <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${escapeHtml(rememberedName || 'Google Account')}</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">${escapeHtml(rememberedEmail)}</div>
-                      </div>
-                    </div>
-                    <span class="badge badge-green" style="font-size: 11px;">1-Click &rarr;</span>
-                  </div>
-                ` : ''}
-
-                <!-- Direct Google Details Form -->
-                <form onsubmit="handleDirectGoogleSignIn(event)">
-                  <div class="form-group" style="text-align: left; margin-bottom: 14px;">
-                    <label class="form-label" style="font-size: 12px; font-weight: 700;">Google Account Email</label>
-                    <input type="email" id="g-email" class="form-input" placeholder="e.g. name@gmail.com" value="${escapeHtml(rememberedEmail)}" required autofocus>
-                  </div>
-
-                  <div class="form-group" style="text-align: left; margin-bottom: 20px;">
-                    <label class="form-label" style="font-size: 12px; font-weight: 700;">Your Full Name</label>
-                    <input type="text" id="g-name" class="form-input" placeholder="e.g. Omprakash Sahoo" value="${escapeHtml(rememberedName)}" required>
-                  </div>
-
-                  <div id="g-auth-error" style="display: none; background: var(--danger-subtle); border: 1px solid var(--danger-border); border-radius: 6px; padding: 10px; margin-bottom: 14px; font-size: 13px; color: var(--danger-text); text-align: left;"></div>
-
-                  <button type="submit" id="btn-g-submit" class="btn btn-primary btn-block btn-lg" style="font-weight: 700;">
-                    Continue with Google &rarr;
-                  </button>
-
-                  <button type="button" class="btn btn-secondary btn-block" onclick="switchAuthTab('login')" style="margin-top: 10px;">
-                    Cancel &amp; Back to Sign In
-                  </button>
-                </form>
-
-                <div style="margin-top: 18px; font-size: 11.5px; color: var(--text-muted); line-height: 1.4;">
-                  By signing in, Google will share your profile name and email address with SplitSmart for verified ledger access.
-                </div>
-              </div>
-            ` : ''}
-            
             <!-- MODE: Email OTP Verification -->
             ${isOtp ? `
               <form id="otp-form" onsubmit="handleOtpSubmit(event)">
@@ -209,18 +138,6 @@ function renderAuthView(initialMode) {
 
             <!-- MODE: Standard Login or Sign Up -->
             ${(isLogin || isSignup) ? `
-              <!-- Google Identity Quick Button -->
-              <button type="button" class="btn btn-block btn-lg" onclick="signInWithGoogle()" style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; font-weight: 600; background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-primary); box-shadow: var(--shadow-xs); border-radius: 8px; transition: all 0.2s;">
-                ${googleSvg}
-                <span>Continue with Google</span>
-              </button>
-
-              <div style="display: flex; align-items: center; margin: 16px 0; color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
-                <span style="padding: 0 10px;">or with email</span>
-                <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
-              </div>
-
               <!-- Login / Signup Form -->
               <form id="auth-form" onsubmit="handleAuthSubmit(event)">
                 ${isSignup ? `
@@ -232,7 +149,7 @@ function renderAuthView(initialMode) {
 
                 <div class="form-group">
                   <label class="form-label" for="auth-email">Email Address</label>
-                  <input type="email" id="auth-email" class="form-input" placeholder="name@example.com" required value="${authState.pendingEmail || ''}" ${!isSignup ? 'autofocus' : ''}>
+                  <input type="email" id="auth-email" class="form-input" placeholder="name@example.com" required value="${authState.pendingEmail || rememberedEmail}" ${!isSignup ? 'autofocus' : ''}>
                 </div>
 
                 <div class="form-group">
@@ -244,7 +161,7 @@ function renderAuthView(initialMode) {
                       </button>
                     ` : ''}
                   </div>
-                  <input type="password" id="auth-password" class="form-input" placeholder="Minimum 6 characters" required>
+                  <input type="password" id="auth-password" class="form-input" placeholder="${isSignup ? 'Min 8 chars, 1 uppercase & 1 number' : 'Enter your password'}" required ${isSignup ? 'minlength="8"' : ''}>
                 </div>
 
                 ${isSignup ? `
@@ -272,7 +189,7 @@ function renderAuthView(initialMode) {
           </div>
 
           <!-- Card Footer Prompt -->
-          ${!isOtp && !isGoogle ? `
+          ${!isOtp ? `
             <div class="card-footer" style="padding: 16px 24px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: center; text-align: center;">
               ${isLogin ? `
                 <span style="font-size: 13px; color: var(--text-muted);">
@@ -304,27 +221,8 @@ function navigateAfterAuth() {
     }
 }
 
-async function handleOneClickGoogleLogin(email, name) {
-    try {
-        showToast('Connecting via Google...', 'info', 1500);
-        const res = await API.post('/auth/supabase-sync', {
-            email,
-            name,
-            avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`
-        });
-
-        if (res.token && res.user) {
-            API.setAuth(res.token, res.user);
-            localStorage.setItem('splitsmart_last_email', email);
-            localStorage.setItem('splitsmart_last_name', name);
-            showToast(`Welcome back, ${res.user.name}!`, 'success');
-            navigateAfterAuth();
-        } else {
-            throw new Error(res.error || 'Authentication could not be completed.');
-        }
-    } catch (err) {
-        showToast('Google sign-in error: ' + err.message, 'error');
-    }
+function signInWithGoogle() {
+    showToast('Please sign in with your email and password below.', 'info', 3000);
 }
 
 async function handleAuthSubmit(e) {
@@ -454,7 +352,7 @@ async function handleForgotPasswordRequest(e) {
                 </div>
                 <div class="form-group">
                   <label class="form-label">New Password</label>
-                  <input type="password" id="fp-new-pw" class="form-input" placeholder="Minimum 6 characters" minlength="6" required>
+                  <input type="password" id="fp-new-pw" class="form-input" placeholder="Min 8 chars, 1 uppercase & 1 number" minlength="8" required>
                 </div>
                 <div id="fp-error-2" style="display: none; background: var(--danger-subtle); color: var(--danger-text); padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 14px;"></div>
                 <button type="submit" id="btn-fp-confirm" class="btn btn-primary btn-block btn-lg">
@@ -512,62 +410,11 @@ function closeForgotPasswordModal() {
     switchAuthTab('login');
 }
 
-/**
- * handleDirectGoogleSignIn - handles the Google form submission (email + name)
- * Called from the Google sign-in form: <form onsubmit="handleDirectGoogleSignIn(event)">
- */
-async function handleDirectGoogleSignIn(e) {
-    e.preventDefault();
-    const email = (document.getElementById('g-email')?.value || '').trim();
-    const name = (document.getElementById('g-name')?.value || '').trim();
-    const btn = document.getElementById('btn-g-submit');
-    const errBox = document.getElementById('g-auth-error');
-
-    if (!email || !name) return;
-
-    if (errBox) errBox.style.display = 'none';
-    if (btn) { btn.disabled = true; btn.innerText = 'Connecting…'; }
-
-    try {
-        const res = await API.post('/auth/supabase-sync', {
-            email,
-            name,
-            avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`
-        });
-
-        if (res.token && res.user) {
-            API.setAuth(res.token, res.user);
-            localStorage.setItem('splitsmart_last_email', email);
-            localStorage.setItem('splitsmart_last_name', res.user.name || name);
-            showToast(`Welcome, ${res.user.name || name}!`, 'success');
-            navigateAfterAuth();
-        } else {
-            throw new Error(res.error || 'Authentication could not be completed.');
-        }
-    } catch (err) {
-        const msg = err.message || 'Sign-in failed. Please try again.';
-        if (errBox) { errBox.innerText = msg; errBox.style.display = 'block'; }
-        else showToast('Google Sign-in failed: ' + msg, 'error');
-    } finally {
-        if (btn) { btn.disabled = false; btn.innerText = 'Continue with Google →'; }
-    }
-}
-
-/**
- * signInWithGoogle - called from the quick "Continue with Google" button on the login/signup form
- * Navigates to the dedicated Google sign-in tab
- */
-function signInWithGoogle() {
-    switchAuthTab('google');
-}
-
 window.renderAuthView = renderAuthView;
 window.switchAuthTab = switchAuthTab;
 window.handleAuthSubmit = handleAuthSubmit;
 window.handleOtpSubmit = handleOtpSubmit;
 window.handleResendOtp = handleResendOtp;
-window.handleOneClickGoogleLogin = handleOneClickGoogleLogin;
-window.handleDirectGoogleSignIn = handleDirectGoogleSignIn;
 window.signInWithGoogle = signInWithGoogle;
 window.renderForgotPasswordModal = renderForgotPasswordModal;
 window.closeForgotPasswordModal = closeForgotPasswordModal;

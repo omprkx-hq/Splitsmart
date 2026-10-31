@@ -5,11 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SplitSmart &mdash; Split expenses with friends, family, and roommates</title>
   <meta name="description" content="SplitSmart: The easiest way to split bills, dinners, trips, and rent with friends, family, and roommates. Fair, simple, and transparent.">
-  <link rel="stylesheet" href="/css/index.css?v=32.0">
+  <script>
+  // Synchronous dark mode initialization - runs before paint to prevent FOUC
+  (function() {
+      var stored = localStorage.getItem('splitsmart_theme_mode');
+      var theme = stored || 'dark'; // default dark
+      if (theme === 'system') {
+          theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+      if (!stored) {
+          localStorage.setItem('splitsmart_theme_mode', 'dark');
+      }
+  })();
+  </script>
+  <link rel="stylesheet" href="/css/index.css?v=33.0">
   <!-- Supabase JS Client for Cloud Database & Google OAuth -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Chart.js local high-reliability bundle -->
   <script src="/js/chart.umd.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -49,32 +64,32 @@
   </footer>
 
   <!-- Application Logic Modules -->
-  <script src="/js/api.js?v=32.0"></script>
-  <script src="/js/state.js?v=32.0"></script>
-  <script src="/js/supabaseClient.js?v=32.0"></script>
-  <script src="/js/components/icons.js?v=32.0"></script>
-  <script src="/js/components/toast.js?v=32.0"></script>
-  <script src="/js/components/navbar.js?v=32.0"></script>
-  <script src="/js/components/awwwards.js?v=32.0"></script>
-  <script src="/js/components/aiChatbot.js?v=32.0"></script>
-  <script src="/js/components/paidBill3D.js?v=32.0"></script>
-  <script src="/js/views/home.js?v=32.0"></script>
-  <script src="/js/views/auth.js?v=32.0"></script>
-  <script src="/js/views/dashboard.js?v=32.0"></script>
-  <script src="/js/views/groups.js?v=32.0"></script>
-  <script src="/js/views/groupDetails.js?v=32.0"></script>
-  <script src="/js/views/addExpense.js?v=32.0"></script>
-  <script src="/js/views/aiAssistant.js?v=32.0"></script>
-  <script src="/js/views/settlements.js?v=32.0"></script>
-  <script src="/js/views/checkout.js?v=32.0"></script>
-  <script src="/js/views/history.js?v=32.0"></script>
-  <script src="/js/views/analytics.js?v=32.0"></script>
-  <script src="/js/views/notifications.js?v=32.0"></script>
-  <script src="/js/views/profile.js?v=32.0"></script>
-  <script src="/js/views/privacy.js?v=32.0"></script>
-  <script src="/js/views/invite.js?v=32.0"></script>
-  <script src="/js/views/calculator.js?v=32.0"></script>
-  <script src="/js/router.js?v=32.0"></script>
-  <script src="/js/app.js?v=32.0"></script>
+  <script src="/js/api.js?v=33.0"></script>
+  <script src="/js/state.js?v=33.0"></script>
+  <script src="/js/supabaseClient.js?v=33.0"></script>
+  <script src="/js/components/icons.js?v=33.0"></script>
+  <script src="/js/components/toast.js?v=33.0"></script>
+  <script src="/js/components/navbar.js?v=33.0"></script>
+  <script src="/js/components/awwwards.js?v=33.0"></script>
+  <script src="/js/components/aiChatbot.js?v=33.0"></script>
+  <script src="/js/components/paidBill3D.js?v=33.0"></script>
+  <script src="/js/views/home.js?v=33.0"></script>
+  <script src="/js/views/auth.js?v=33.0"></script>
+  <script src="/js/views/dashboard.js?v=33.0"></script>
+  <script src="/js/views/groups.js?v=33.0"></script>
+  <script src="/js/views/groupDetails.js?v=33.0"></script>
+  <script src="/js/views/addExpense.js?v=33.0"></script>
+  <script src="/js/views/aiAssistant.js?v=33.0"></script>
+  <script src="/js/views/settlements.js?v=33.0"></script>
+  <script src="/js/views/checkout.js?v=33.0"></script>
+  <script src="/js/views/history.js?v=33.0"></script>
+  <script src="/js/views/analytics.js?v=33.0"></script>
+  <script src="/js/views/notifications.js?v=33.0"></script>
+  <script src="/js/views/profile.js?v=33.0"></script>
+  <script src="/js/views/privacy.js?v=33.0"></script>
+  <script src="/js/views/invite.js?v=33.0"></script>
+  <script src="/js/views/calculator.js?v=33.0"></script>
+  <script src="/js/router.js?v=33.0"></script>
+  <script src="/js/app.js?v=33.0"></script>
 </body>
 </html>

@@ -28,8 +28,11 @@ router.post('/signup', async (req, res) => {
             return res.status(400).json({ error: 'Name, email, and password are required.' });
         }
 
-        if (password.length < 6) {
-            return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+        if (password.length < 8) {
+            return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+        }
+        if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+            return res.status(400).json({ error: 'Password must contain at least one uppercase letter and one number.' });
         }
 
         // 1. Mandatory MX Record Verification
@@ -578,6 +581,14 @@ router.post('/supabase/setup', async (req, res) => {
 router.post('/supabase-sync', async (req, res) => {
     try {
         const { email, name, avatarUrl, supabaseToken, defaultCurrency = 'USD' } = req.body;
+
+        // Block direct calls without a valid supabaseToken - this is the fake auth hole
+        if (!supabaseToken) {
+            return res.status(400).json({ 
+                error: 'OAUTH_TOKEN_REQUIRED',
+                message: 'Google authentication requires a valid OAuth token.'
+            });
+        }
 
         let verifiedEmail = email;
         let verifiedName = name;

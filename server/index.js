@@ -19,6 +19,33 @@ const PORT = process.env.PORT || 5000;
 // Enable CORS
 app.use(cors());
 
+// Security headers
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+});
+
+const rateLimit = require('express-rate-limit');
+
+// Auth rate limiter: 10 attempts per 15 min per IP
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { error: 'TOO_MANY_ATTEMPTS', message: 'Too many attempts. Please try again in 15 minutes.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// API general limiter: 200 req/min per IP  
+const apiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 200,
+    message: { error: 'RATE_LIMITED', message: 'Too many requests. Please slow down.' },
+});
+
 // Parse JSON and urlencoded request bodies
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -58,6 +85,12 @@ apiRouter.get('/health', (req, res) => {
         }
     });
 });
+
+// Rate limiting middleware
+apiRouter.use('/auth/login', authLimiter);
+apiRouter.use('/auth/signup', authLimiter);
+apiRouter.use('/auth/supabase-sync', authLimiter);
+apiRouter.use(apiLimiter);
 
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/groups', groupsRoutes);
