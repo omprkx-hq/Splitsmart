@@ -89,6 +89,7 @@ apiRouter.get('/health', (req, res) => {
 // Rate limiting middleware
 apiRouter.use('/auth/login', authLimiter);
 apiRouter.use('/auth/signup', authLimiter);
+apiRouter.use('/auth/google', authLimiter);
 apiRouter.use('/auth/supabase-sync', authLimiter);
 apiRouter.use(apiLimiter);
 

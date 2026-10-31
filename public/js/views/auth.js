@@ -138,6 +138,15 @@ function renderAuthView(initialMode) {
 
             <!-- MODE: Standard Login or Sign Up -->
             ${(isLogin || isSignup) ? `
+              <!-- Official Google Identity Button Container -->
+              <div id="google-signin-btn-container" style="display: flex; justify-content: center; align-items: center; min-height: 44px; margin-bottom: 16px;"></div>
+
+              <div style="display: flex; align-items: center; margin: 16px 0; color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
+                <span style="padding: 0 10px;">or with email</span>
+                <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
+              </div>
+
               <!-- Login / Signup Form -->
               <form id="auth-form" onsubmit="handleAuthSubmit(event)">
                 ${isSignup ? `
@@ -210,6 +219,75 @@ function renderAuthView(initialMode) {
 
       </div>
     `;
+
+    if (isLogin || isSignup) {
+        initGoogleSignIn();
+    }
+}
+
+const GOOGLE_CLIENT_ID = '687134445709-o9he84j06lh8j2kk5da735lsfirp5m86.apps.googleusercontent.com';
+
+function initGoogleSignIn() {
+    const container = document.getElementById('google-signin-btn-container');
+    if (!container) return;
+
+    let attempts = 0;
+    function mount() {
+        if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+            try {
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleGoogleCredentialResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+
+                const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+                google.accounts.id.renderButton(container, {
+                    type: 'standard',
+                    theme: isDark ? 'filled_black' : 'outline',
+                    size: 'large',
+                    text: 'continue_with',
+                    shape: 'rectangular',
+                    logo_alignment: 'left',
+                    width: 320
+                });
+            } catch (err) {
+                console.warn('Google Identity initialization notice:', err);
+            }
+        } else if (attempts < 25) {
+            attempts++;
+            setTimeout(mount, 120);
+        }
+    }
+    mount();
+}
+
+async function handleGoogleCredentialResponse(response) {
+    if (!response || !response.credential) {
+        showToast('Google Sign-In was cancelled or failed.', 'error');
+        return;
+    }
+
+    try {
+        showToast('Connecting via verified Google Identity...', 'info', 1500);
+        const res = await API.post('/auth/google', {
+            credential: response.credential
+        });
+
+        if (res.token && res.user) {
+            API.setAuth(res.token, res.user);
+            localStorage.setItem('splitsmart_last_email', res.user.email);
+            localStorage.setItem('splitsmart_last_name', res.user.name);
+            showToast(`Welcome, ${res.user.name}!`, 'success', 3000);
+            navigateAfterAuth();
+        } else {
+            throw new Error(res.message || 'Authentication could not be completed.');
+        }
+    } catch (err) {
+        console.error('Google Sign-In Error:', err);
+        showToast(err.message || 'Google sign-in failed. Please try again.', 'error', 4500);
+    }
 }
 
 function navigateAfterAuth() {
@@ -416,6 +494,8 @@ window.handleAuthSubmit = handleAuthSubmit;
 window.handleOtpSubmit = handleOtpSubmit;
 window.handleResendOtp = handleResendOtp;
 window.signInWithGoogle = signInWithGoogle;
+window.initGoogleSignIn = initGoogleSignIn;
+window.handleGoogleCredentialResponse = handleGoogleCredentialResponse;
 window.renderForgotPasswordModal = renderForgotPasswordModal;
 window.closeForgotPasswordModal = closeForgotPasswordModal;
 window.handleForgotPasswordRequest = handleForgotPasswordRequest;

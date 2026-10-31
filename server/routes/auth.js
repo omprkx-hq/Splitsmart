@@ -8,6 +8,10 @@ const { sendMail } = require('../services/mailer');
 const { getOtpEmailTemplate } = require('../services/emailTemplates');
 const { authenticateToken, JWT_SECRET } = require('../middleware/auth');
 const supabaseService = require('../services/supabaseService');
+const { OAuth2Client } = require('google-auth-library');
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '687134445709-o9he84j06lh8j2kk5da735lsfirp5m86.apps.googleusercontent.com';
+const googleAuthClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 /**
  * Helper to generate secure 6-digit numeric OTP
@@ -669,6 +673,121 @@ router.post('/supabase-sync', async (req, res) => {
     } catch (err) {
         console.error('Supabase/Google OAuth sync error:', err);
         return res.status(500).json({ error: 'OAuth synchronization failed: ' + err.message });
+    }
+});
+
+/**
+ * GET /api/auth/google/config
+ * Exposes active Google OAuth Client ID to the frontend
+ */
+router.get('/google/config', (req, res) => {
+    return res.json({
+        clientId: process.env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID,
+        configured: Boolean(process.env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID)
+    });
+});
+
+/**
+ * POST /api/auth/google
+ * Official Google Identity Services token verification
+ * Cryptographically validates ID token signature with Google certificates
+ */
+router.post('/google', async (req, res) => {
+    try {
+        const { credential, defaultCurrency = 'INR' } = req.body;
+
+        if (!credential) {
+            return res.status(400).json({
+                error: 'CREDENTIAL_REQUIRED',
+                message: 'Official Google ID credential token is required.'
+            });
+        }
+
+        const activeClientId = process.env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID;
+
+        // Verify ID token cryptographically directly with Google
+        let ticket;
+        try {
+            ticket = await googleAuthClient.verifyIdToken({
+                idToken: credential,
+                audience: activeClientId
+            });
+        } catch (verifyErr) {
+            console.error('Google ID token verification failed:', verifyErr.message);
+            return res.status(401).json({
+                error: 'INVALID_GOOGLE_TOKEN',
+                message: 'Google authentication failed: ' + verifyErr.message
+            });
+        }
+
+        const payload = ticket.getPayload();
+        if (!payload || !payload.email) {
+            return res.status(400).json({
+                error: 'INVALID_PAYLOAD',
+                message: 'Could not extract verified email from Google identity token.'
+            });
+        }
+
+        const normalizedEmail = payload.email.trim().toLowerCase();
+        const userName = (payload.name || payload.given_name || normalizedEmail.split('@')[0] || 'Friend').trim();
+        const avatarUrl = payload.picture || null;
+
+        // Upsert user in database
+        const existing = await query(`
+            SELECT id, name, email, is_verified, default_currency, avatar_url
+            FROM users WHERE email = $1
+        `, [normalizedEmail]);
+
+        let userRecord = null;
+        if (existing.rows.length > 0) {
+            userRecord = existing.rows[0];
+            await query(`
+                UPDATE users
+                SET is_verified = true,
+                    avatar_url = COALESCE($1, avatar_url),
+                    name = COALESCE($2, name),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = $3
+            `, [avatarUrl, userName, userRecord.id]);
+        } else {
+            const insertRes = await query(`
+                INSERT INTO users (name, email, password_hash, is_verified, avatar_url, default_currency)
+                VALUES ($1, $2, 'google_oauth_verified', true, $3, $4)
+                RETURNING id, name, email, is_verified, default_currency, avatar_url, created_at
+            `, [userName, normalizedEmail, avatarUrl, defaultCurrency]);
+            userRecord = insertRes.rows[0];
+
+            await query(`
+                INSERT INTO notifications (user_id, type, title, message)
+                VALUES ($1, 'WELCOME', 'Welcome to SplitSmart AI!', 'Your Google account was connected securely with verified identity.')
+            `, [userRecord.id]);
+        }
+
+        // Issue SplitSmart JWT session token
+        const token = jwt.sign(
+            { userId: userRecord.id, email: normalizedEmail },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        return res.json({
+            message: 'Signed in with Google successfully!',
+            token,
+            user: {
+                id: userRecord.id,
+                name: userRecord.name || userName,
+                email: normalizedEmail,
+                is_verified: true,
+                default_currency: userRecord.default_currency || defaultCurrency,
+                avatar_url: avatarUrl || userRecord.avatar_url
+            }
+        });
+    } catch (err) {
+        console.error('Google OAuth endpoint error:', err);
+        return res.status(500).json({
+            error: 'SERVER_ERROR',
+            message: 'Failed to process Google sign-in: ' + err.message
+        });
     }
 });
 
