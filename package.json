@@ -1,0 +1,41 @@
+{
+  "name": "splitsmart-ai",
+  "version": "1.0.0",
+  "description": "SplitSmart AI - Enterprise Group Expense-Splitting & PayPal Settlement Web Application",
+  "main": "server/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "tunnel": "node scripts/cloudflare-tunnel.js",
+    "deploy:pages": "npx wrangler pages deploy public --project-name splitsmart",
+    "db:migrate": "node server/db/migrate.js",
+    "db:test": "node server/db/testConnection.js"
+  },
+  "keywords": [
+    "fintech",
+    "expense-tracker",
+    "paypal",
+    "splitwise",
+    "ai"
+  ],
+  "author": "SplitSmart AI Engineering Team",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.10.0",
+    "pg": "^8.13.1",
+    "pg-mem": "^3.0.14",
+    "serverless-http": "^4.0.0",
+    "tesseract.js": "^5.1.1"
+  },
+  "devDependencies": {
+    "cloudflared": "^0.7.3"
+  }
+}

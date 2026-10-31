@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SplitSmart &mdash; Split expenses with friends, family, and roommates</title>
+  <meta name="description" content="SplitSmart: The easiest way to split bills, dinners, trips, and rent with friends, family, and roommates. Fair, simple, and transparent.">
+  <link rel="stylesheet" href="/css/index.css?v=29.0">
+  <!-- Supabase JS Client for Cloud Database & Google OAuth -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Chart.js local high-reliability bundle -->
+  <script src="/js/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="top-navbar" id="navbar"></header>
+
+  <!-- Global In-App Notifications Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Dynamic Modal Overlay Container -->
+  <div id="modal-container"></div>
+
+  <!-- Main View Render Area -->
+  <main id="app-content" class="main-wrapper">
+    <div style="text-align: center; padding: 60px 0; color: #64748B;">
+      Initializing SplitSmart AI Ledger Engine...
+    </div>
+  </main>
+
+  <!-- Enterprise Footer -->
+  <footer style="background-color: var(--bg-surface); border-top: 1px solid var(--border-subtle); padding: 32px 20px; font-size: 13px; color: var(--text-muted);">
+    <div style="max-width: 1240px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+      <div>
+        <span style="font-weight: 700; color: var(--text-primary);">Split<span style="color: var(--accent-primary);">Smart</span> AI</span>
+        <span style="margin: 0 8px; color: var(--border-strong);">&bull;</span>
+        <span>Split smarter. Settle easier.</span>
+        <div style="margin-top: 4px; font-size: 12px; color: var(--text-muted);">
+          All balance calculations enforce strict decimal-safe tabular precision.
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 18px; font-weight: 500;">
+        <a href="#/privacy" style="color: var(--text-secondary);">Privacy Policy &amp; Security</a>
+        <a href="#/help" style="color: var(--text-secondary);">Ledger Math &amp; FAQ</a>
+        <span class="badge badge-amber" style="font-size: 11px;">PayPal Sandbox Mode</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Logic Modules -->
+  <script src="/js/api.js?v=29.0"></script>
+  <script src="/js/state.js?v=29.0"></script>
+  <script src="/js/supabaseClient.js?v=29.0"></script>
+  <script src="/js/components/icons.js?v=29.0"></script>
+  <script src="/js/components/toast.js?v=29.0"></script>
+  <script src="/js/components/navbar.js?v=29.0"></script>
+  <script src="/js/components/awwwards.js?v=29.0"></script>
+  <script src="/js/components/aiChatbot.js?v=29.0"></script>
+  <script src="/js/components/paidBill3D.js?v=29.0"></script>
+  <script src="/js/views/home.js?v=29.0"></script>
+  <script src="/js/views/auth.js?v=29.0"></script>
+  <script src="/js/views/dashboard.js?v=29.0"></script>
+  <script src="/js/views/groups.js?v=29.0"></script>
+  <script src="/js/views/groupDetails.js?v=29.0"></script>
+  <script src="/js/views/addExpense.js?v=29.0"></script>
+  <script src="/js/views/aiAssistant.js?v=29.0"></script>
+  <script src="/js/views/settlements.js?v=29.0"></script>
+  <script src="/js/views/checkout.js?v=29.0"></script>
+  <script src="/js/views/history.js?v=29.0"></script>
+  <script src="/js/views/analytics.js?v=29.0"></script>
+  <script src="/js/views/notifications.js?v=29.0"></script>
+  <script src="/js/views/profile.js?v=29.0"></script>
+  <script src="/js/views/privacy.js?v=29.0"></script>
+  <script src="/js/views/invite.js?v=29.0"></script>
+  <script src="/js/views/calculator.js?v=29.0"></script>
+  <script src="/js/router.js?v=29.0"></script>
+  <script src="/js/app.js?v=29.0"></script>
+</body>
+</html>
