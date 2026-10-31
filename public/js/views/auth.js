@@ -512,12 +512,63 @@ function closeForgotPasswordModal() {
     switchAuthTab('login');
 }
 
+/**
+ * handleDirectGoogleSignIn - handles the Google form submission (email + name)
+ * Called from the Google sign-in form: <form onsubmit="handleDirectGoogleSignIn(event)">
+ */
+async function handleDirectGoogleSignIn(e) {
+    e.preventDefault();
+    const email = (document.getElementById('g-email')?.value || '').trim();
+    const name = (document.getElementById('g-name')?.value || '').trim();
+    const btn = document.getElementById('btn-g-submit');
+    const errBox = document.getElementById('g-auth-error');
+
+    if (!email || !name) return;
+
+    if (errBox) errBox.style.display = 'none';
+    if (btn) { btn.disabled = true; btn.innerText = 'Connecting…'; }
+
+    try {
+        const res = await API.post('/auth/supabase-sync', {
+            email,
+            name,
+            avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`
+        });
+
+        if (res.token && res.user) {
+            API.setAuth(res.token, res.user);
+            localStorage.setItem('splitsmart_last_email', email);
+            localStorage.setItem('splitsmart_last_name', res.user.name || name);
+            showToast(`Welcome, ${res.user.name || name}!`, 'success');
+            navigateAfterAuth();
+        } else {
+            throw new Error(res.error || 'Authentication could not be completed.');
+        }
+    } catch (err) {
+        const msg = err.message || 'Sign-in failed. Please try again.';
+        if (errBox) { errBox.innerText = msg; errBox.style.display = 'block'; }
+        else showToast('Google Sign-in failed: ' + msg, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerText = 'Continue with Google →'; }
+    }
+}
+
+/**
+ * signInWithGoogle - called from the quick "Continue with Google" button on the login/signup form
+ * Navigates to the dedicated Google sign-in tab
+ */
+function signInWithGoogle() {
+    switchAuthTab('google');
+}
+
 window.renderAuthView = renderAuthView;
 window.switchAuthTab = switchAuthTab;
 window.handleAuthSubmit = handleAuthSubmit;
 window.handleOtpSubmit = handleOtpSubmit;
 window.handleResendOtp = handleResendOtp;
 window.handleOneClickGoogleLogin = handleOneClickGoogleLogin;
+window.handleDirectGoogleSignIn = handleDirectGoogleSignIn;
+window.signInWithGoogle = signInWithGoogle;
 window.renderForgotPasswordModal = renderForgotPasswordModal;
 window.closeForgotPasswordModal = closeForgotPasswordModal;
 window.handleForgotPasswordRequest = handleForgotPasswordRequest;

@@ -6,7 +6,7 @@
 
 // Global Theme Management Engine
 function getThemePreference() {
-    return localStorage.getItem('splitsmart_theme_mode') || 'system';
+    return localStorage.getItem('splitsmart_theme_mode') || 'dark';
 }
 
 function getEffectiveTheme() {
